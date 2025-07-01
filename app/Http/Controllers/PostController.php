@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
+use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 
 class PostController extends Controller
@@ -23,6 +23,7 @@ class PostController extends Controller
 
     public function store(Request $request)
     {
+        // ✅ Validate request fields
         $request->validate([
             'title_en' => 'required|string',
             'title_hi' => 'required|string',
@@ -32,23 +33,28 @@ class PostController extends Controller
         ]);
 
         $imagePath = null;
-
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            $filename = time() . '.' . $image->getClientOriginalExtension();
+            $filename = uniqid('profile_') . '.' . $image->getClientOriginalExtension();
+            $storagePath = 'public/profile_images/' . $filename;
 
-            $manager = new ImageManager(new Driver());
-            $resized = $manager->read($image->getPathname())
-                               ->cover(150, 150)
-                               ->toJpeg();
-file_put_contents(public_path("profile_images/{$filename}"), (string) $resized);
-$imagePath = "profile_images/{$filename}";
+            $manager = new ImageManager(new Driver()); // ✅ Required in Intervention v3
+            $resizedImage = $manager->read($image)->cover(150, 150); // 150x150 thumbnail
 
+            Storage::disk('public')->put('profile_images/' . $filename, (string) $resizedImage->toJpeg());
+
+            $imagePath = 'storage/profile_images/' . $filename;
         }
-
+        // ✅ Save post
         Post::create([
-            'title' => ['en' => $request->title_en, 'hi' => $request->title_hi],
-            'description' => ['en' => $request->description_en, 'hi' => $request->description_hi],
+            'title' => [
+                'en' => $request->title_en,
+                'hi' => $request->title_hi,
+            ],
+            'description' => [
+                'en' => $request->description_en,
+                'hi' => $request->description_hi,
+            ],
             'image_path' => $imagePath,
         ]);
 

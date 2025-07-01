@@ -11,7 +11,7 @@ class Post extends Model
 {
     use HasTranslations, HasSlug;
 
-    protected $fillable = ['title', 'description', 'slug'];
+    protected $fillable = ['title', 'description', 'slug', 'image_path'];
     public $translatable = ['title', 'description'];
 
     public function getSlugOptions(): SlugOptions
